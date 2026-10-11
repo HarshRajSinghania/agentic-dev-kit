@@ -28,7 +28,7 @@
     },
     "docs/agentic-dev-kit/fallback-review-panel.md": {
       "role": "doctrine",
-      "sha256": "cc9a4a3013c4032a148805cd59cfa85f1c97ae2409ad6e52cc84144da516c693"
+      "sha256": "04e3c1fe87aee05895ee15303c6d36bec242cde42b828a44f14ab97c62694078"
     },
     "docs/agentic-dev-kit/live-validation-evidence.md": {
       "role": "repo-only",
@@ -36,7 +36,7 @@
     },
     "docs/agentic-dev-kit/runtime-parity.md": {
       "role": "doctrine",
-      "sha256": "4c52ae60f092552728f54698384561ae5130b5287e9f0b9055a8328653e7cdb3"
+      "sha256": "88799dfb63c2437bb7922ef011385e10329910ef1ae4c7533e4c3c7eef96c657"
     },
     "docs/agentic-dev-kit/safety-critical-changes.md": {
       "role": "doctrine",
@@ -48,7 +48,7 @@
     },
     "docs/agentic-dev-kit/workflows/adopt.md": {
       "role": "workflow",
-      "sha256": "125cf156316a6e64a671dbb8b5b9005b2df3237e88fa3a60ceec6b8955ed4f25"
+      "sha256": "b8b37144bd27b3c8e9b2ba27134e9eac4424a7ce60643be3bfc7387a3ea81397"
     },
     "docs/agentic-dev-kit/workflows/parallel-headless.md": {
       "role": "workflow",
@@ -68,7 +68,7 @@
     },
     "docs/agentic-dev-kit/workflows/session-start.md": {
       "role": "workflow",
-      "sha256": "31bb8c5d818fe8919886076c338d8eb2158f81ed9af61f37499d14f3259f93f8"
+      "sha256": "07323f18494aab115fd41cea93e06c15f8b1093244ebb9eec9e693e8dd40ce69"
     },
     "docs/agentic-dev-kit/workflows/triage-friction-log.md": {
       "role": "workflow",
@@ -76,7 +76,7 @@
     },
     "docs/agentic-dev-kit/workflows/upgrade.md": {
       "role": "workflow",
-      "sha256": "207299e85929d9e003bc90b2d77fc74856c6a0036a11441ed71743e77400cd9c"
+      "sha256": "78553944d4aca06808b6a3a27349534766e9f24a40dc094a2f6c69f0ce9f8023"
     },
     "docs/agentic-dev-kit/workflows/wrap-up.md": {
       "role": "workflow",
@@ -84,7 +84,7 @@
     },
     "docs/templates/AGENTS.md.tmpl": {
       "role": "template",
-      "sha256": "dcc0c2b972c71c28d12208b4c3f1fa4ccf414f31a5bea31f5e2b0c43f079f5a4"
+      "sha256": "ff7f2d4873b5a56f22eea1b8c96748027c0e0ef994aa5cfcc95d74e49ad87de8"
     },
     "docs/templates/CLAUDE.md.tmpl": {
       "role": "template",
@@ -272,7 +272,7 @@
         "scripts/kit_doctor.py"
       ],
       "role": "engine",
-      "sha256": "2f0b13a5c3c17561c0a66f071ac648637194fb1934eba15a53b93a6f9c9d6b14"
+      "sha256": "3b70edeae199147ec35f69ca039fd6531b1b596b1b70b4b1419b1e52c05633fe"
     },
     "scripts/lib/state_paths/__init__.py": {
       "required_by": [
@@ -537,7 +537,7 @@
     },
     "scripts/runtime_smoke.py": {
       "role": "repo-only",
-      "sha256": "02ea87c1a97922aed59b4da0be934a641c03a3f4de49a1e680d2b1d3b7add2f8"
+      "sha256": "e3fbd84d90c92889d7be5ff0b79f04153fb6ae6c534ca1bdf1c6d540f1309ec3"
     },
     "scripts/sweep_scratch.py": {
       "role": "engine",
@@ -597,7 +597,7 @@
     },
     "scripts/tests/test_kit_doctor.py": {
       "role": "test",
-      "sha256": "6f456d454dcb89f68edf47df09eacb68f31bde0885f6e46b7f6659436b3eea7c"
+      "sha256": "7821f93a31df1e2165e662ab113cfa7209bc3d1ebf275063fbd20827e38a7e11"
     },
     "scripts/tests/test_kit_repo_only.py": {
       "role": "test",
@@ -629,7 +629,7 @@
     },
     "scripts/tests/test_portability.py": {
       "role": "test",
-      "sha256": "1dccd1e176fc32058c4f22cc7dce3b508ca65f21f95aee2fb48e50b3d4a10738"
+      "sha256": "31395a6d083a130a829cec6ef1c07b452c99432ea4c72880ca129db86bd85bdc"
     },
     "scripts/tests/test_pr_followup_hook.py": {
       "role": "test",
@@ -661,7 +661,7 @@
     },
     "scripts/tests/test_runtime_smoke.py": {
       "role": "repo-only",
-      "sha256": "e943254ac445c5d4ab6d9c1c8fce28cbd856cbadf12d4240017a824ac7cdd6f8"
+      "sha256": "f031085e5bb481fc71d63c286d03cb61931df6d03838a20a330d549e40c37919"
     },
     "scripts/tests/test_state_guard.py": {
       "role": "test",
