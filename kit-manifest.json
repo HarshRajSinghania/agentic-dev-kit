@@ -48,7 +48,7 @@
     },
     "docs/agentic-dev-kit/workflows/adopt.md": {
       "role": "workflow",
-      "sha256": "b8b37144bd27b3c8e9b2ba27134e9eac4424a7ce60643be3bfc7387a3ea81397"
+      "sha256": "c4dd5dc9cfc7aeb59ba6c9309e0a17ba05cc7de66a7536c600ed535713707f1b"
     },
     "docs/agentic-dev-kit/workflows/parallel-headless.md": {
       "role": "workflow",
@@ -72,7 +72,23 @@
     },
     "docs/agentic-dev-kit/workflows/triage-friction-log.md": {
       "role": "workflow",
-      "sha256": "4c92473f9a1840234ee175f0d638018ae7ff6627a02a673980134dcb6dab6e8e"
+      "sha256": "c723ace0124b9c996a87d8577afdb5b55e96177bf32a3d144c487a2cd8ed4b62"
+    },
+    "docs/agentic-dev-kit/workflows/triage-friction-log/engine-cli.md": {
+      "role": "workflow",
+      "sha256": "fc826161750ca25016c9ebf26fd1460e8ee6551429ed544a5372fa172360302f"
+    },
+    "docs/agentic-dev-kit/workflows/triage-friction-log/finalize.md": {
+      "role": "workflow",
+      "sha256": "5206193b6583bab484c27e5ee6ce3f7432ff7a760622273cbdf98ae62d1663b1"
+    },
+    "docs/agentic-dev-kit/workflows/triage-friction-log/recovery.md": {
+      "role": "workflow",
+      "sha256": "febcf9ea3906e4345ef762db0caee445395261a307a232aa4f8dd02d87df00ca"
+    },
+    "docs/agentic-dev-kit/workflows/triage-friction-log/state-schema.md": {
+      "role": "workflow",
+      "sha256": "6435271a1d09395dc61df3fe0b3e84b2e2033fd7f1b640f4434904b47b08e80b"
     },
     "docs/agentic-dev-kit/workflows/upgrade.md": {
       "role": "workflow",
@@ -163,7 +179,7 @@
         "scripts/panel_prompt.py"
       ],
       "role": "engine",
-      "sha256": "cc4f7ef124168945df5f16f658eb15aad52974df6005a35613732968adc591b0"
+      "sha256": "35c1363a8a66385f9c95e71969f0e58517e272b912462328bdf402cb9b017ba8"
     },
     "scripts/launch_lane.py": {
       "role": "engine",
@@ -549,7 +565,7 @@
     },
     "scripts/tests/conftest.py": {
       "role": "test",
-      "sha256": "f6af4d666c38427505997eec2da6eba114649bf9eff284f119757e9ad0c2ffa5"
+      "sha256": "8b65b43b0b9411263132823289b09ca6bd9542a6a20f99c6c2d1646078873066"
     },
     "scripts/tests/fixtures/codex_parallel_batch_expected.json": {
       "role": "repo-only",
@@ -597,7 +613,7 @@
     },
     "scripts/tests/test_kit_doctor.py": {
       "role": "test",
-      "sha256": "7821f93a31df1e2165e662ab113cfa7209bc3d1ebf275063fbd20827e38a7e11"
+      "sha256": "2333f65857635cca2d8caf82532a077d98c5fee53241d326e78cd056051053b0"
     },
     "scripts/tests/test_kit_repo_only.py": {
       "role": "test",
@@ -629,7 +645,7 @@
     },
     "scripts/tests/test_portability.py": {
       "role": "test",
-      "sha256": "31395a6d083a130a829cec6ef1c07b452c99432ea4c72880ca129db86bd85bdc"
+      "sha256": "80f435d83a5158761ce7b719eca420e2a22f3c106d2a498ee4c61bc3e90215f3"
     },
     "scripts/tests/test_pr_followup_hook.py": {
       "role": "test",

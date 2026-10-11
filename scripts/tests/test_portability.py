@@ -22,7 +22,12 @@ from types import ModuleType
 
 import pytest
 import yaml
-from conftest import generated_adapter_source, require_kit_source, shipped_test_input
+from conftest import (
+    generated_adapter_source,
+    read_workflow,
+    require_kit_source,
+    shipped_test_input,
+)
 
 ENGINE_DIR = Path(__file__).resolve().parent.parent
 
@@ -2072,6 +2077,160 @@ isolation, and delegation mechanisms.""",
     assert body in allowed_bodies
 
 
+# A split workflow's entry links every reference file, and the entry and each
+# reference file say to read all of them before the first action of any run.
+# The read is unconditional on purpose: conditional triggers made one file's
+# read depend on knowledge only another supplied, and any unpinned sentence
+# could contradict a trigger. Both statements are compared for exact equality,
+# so a sentence added, removed or reworded there fails.
+_SPLIT_WORKFLOW_PREFACE = {
+    "triage-friction-log": (
+        "This workflow is split so that each of its files fits in a single read. The "
+        "files below are part of the workflow and are as normative as this one; a "
+        "section cited here by name, or as *above* or *below*, may sit in any of them. "
+        "**Read every one of them completely, not in part, before the first action of "
+        "any run**, whatever its entry, mode or phase."
+    ),
+}
+
+_SPLIT_WORKFLOW_SUMMARIES = {
+    "triage-friction-log": {
+        "recovery.md": (
+            "*Completed-state retirement*, *Gate-only input precedence*, *Test input "
+            "precedence*, *State-present held-evidence procedure* and *Invalid-state "
+            "recovery*."
+        ),
+        "state-schema.md": "the exact state, phase and single-writer gate shapes.",
+        "finalize.md": "*Tracker writes and accounting* and *Finalize and sweep*.",
+        "engine-cli.md": "the engines' invocations and outputs.",
+    },
+}
+
+# Which sections each reference file holds. A section that moved files would
+# change no read, but a citation by file would then point at the wrong one.
+_SPLIT_WORKFLOW_SECTIONS = {
+    "triage-friction-log": {
+        "recovery.md": (
+            "Completed-state retirement",
+            "Gate-only input precedence",
+            "Test input precedence",
+            "State-present held-evidence procedure",
+            "Invalid-state recovery",
+            "Gate-only recovery transition",
+            "State-present recovery transition",
+            "Isolated test-state recovery",
+        ),
+        "state-schema.md": (
+            "Ordinary active state",
+            "Validity and abandonability",
+            "The single-writer gate file",
+        ),
+        "finalize.md": ("Tracker writes and accounting", "Finalize and sweep"),
+        "engine-cli.md": ("Engine CLI",),
+    },
+}
+
+
+def _expected_reference_section(slug: str) -> str:
+    bullets = " ".join(
+        f"- [`{slug}/{name}`]({slug}/{name}) — {summary}"
+        for name, summary in _SPLIT_WORKFLOW_SUMMARIES[slug].items()
+    )
+    return f"{_SPLIT_WORKFLOW_PREFACE[slug]} {bullets}"
+
+
+def _expected_opening(slug: str) -> str:
+    return (
+        f"Read this file completely, together with [`{slug}.md`](../{slug}.md) and its "
+        "other reference files, before the first action of any run. It is part of that "
+        "workflow and as normative as it; a section cited by name, or as *above* or "
+        "*below*, may sit in that file or another of its reference files."
+    )
+
+
+def _headings(text: str) -> list[str]:
+    """A reference file's section headings, after its title and contents list."""
+    return [
+        line.lstrip("#").strip()
+        for line in text.splitlines()
+        if line.startswith(("## ", "### ")) and line != "## Contents"
+    ]
+
+
+def _assert_split_workflow_links_and_triggers(root: Path) -> None:
+    workflows = root / "docs" / "agentic-dev-kit" / "workflows"
+    split = sorted(path.name for path in workflows.iterdir() if path.is_dir())
+    assert split == sorted(_SPLIT_WORKFLOW_SUMMARIES), split
+    for slug, summaries in _SPLIT_WORKFLOW_SUMMARIES.items():
+        raw = (workflows / f"{slug}.md").read_text(encoding="utf-8")
+        assert raw.count("\n## Reference files\n") == 1, f"{slug}.md: no Reference files section"
+        section = raw.split("\n## Reference files\n", 1)[1].split("\n## ", 1)[0]
+        assert " ".join(section.split()) == _expected_reference_section(slug), (
+            f"{slug}.md's Reference files section differs from its declaration"
+        )
+        files = sorted(path.name for path in (workflows / slug).glob("*.md"))
+        assert files == sorted(summaries), f"{slug}/ holds {files}"
+        entry = " ".join(raw.split())
+        for name, summary in summaries.items():
+            text = (workflows / slug / name).read_text(encoding="utf-8")
+            opening = " ".join(text.split("\n\n", 2)[1].split())
+            assert opening == _expected_opening(slug), (
+                f"{name}'s opening paragraph differs from its declaration"
+            )
+            headings = _headings(text)
+            assert headings == list(_SPLIT_WORKFLOW_SECTIONS[slug][name]), (
+                f"{name} holds {headings}"
+            )
+            for cited in re.findall(r"\*([^*]+)\*", summary):
+                assert cited in headings, f"{slug}.md names *{cited}* for {name}"
+        for cited, name in re.findall(r"\*([^*]+)\*, in `([A-Za-z0-9_-]+\.md)`", entry):
+            assert cited in _headings(
+                (workflows / slug / name).read_text(encoding="utf-8")
+            ), f"{slug}.md cites *{cited}* in {name}"
+
+
+def test_split_workflows_link_and_require_every_reference_file() -> None:
+    require_kit_source()
+    _assert_split_workflow_links_and_triggers(REPO_ROOT)
+
+
+def test_split_workflow_read_and_link_mutations_are_rejected(tmp_path: Path) -> None:
+    require_kit_source()
+    source = REPO_ROOT / "docs" / "agentic-dev-kit" / "workflows"
+    mutations = (
+        ("triage-friction-log.md", "**Read every one of them completely, not in part, before the "
+         "first action of any run**", "These files are optional background"),
+        ("triage-friction-log.md", "whatever its entry, mode or phase.",
+         "whatever its entry, mode or phase. A short run may skip them."),
+        ("triage-friction-log.md", "are as normative as this one;", "are optional background;"),
+        ("triage-friction-log.md", "may sit in any of them.", "lives only in this file."),
+        ("triage-friction-log.md", "](triage-friction-log/finalize.md) —", "](finalize.md) —"),
+        ("triage-friction-log.md", "## Reference files", "### Reference files"),
+        ("triage-friction-log.md", "*Completed-state retirement*, in `recovery.md`",
+         "*Completed-state retirement*, in `engine-cli.md`"),
+        ("triage-friction-log/recovery.md", "Read this file completely,", "You may read this file,"),
+        ("triage-friction-log/recovery.md", "before the first action of any run.",
+         "before the first action of any run. Skip this file when the run is routine."),
+        ("triage-friction-log/engine-cli.md", "may sit in that file or another of its reference files.",
+         "sits in this file only."),
+        ("triage-friction-log/finalize.md", "and as normative as it;", "and optional;"),
+        ("triage-friction-log/recovery.md", "### Completed-state retirement", "### Completed state retirement"),
+        ("triage-friction-log/finalize.md", "## Finalize and sweep", "#### Finalize and sweep"),
+    )
+    for index, (rel, old, new) in enumerate(mutations):
+        root = tmp_path / f"case-{index}"
+        shutil.copytree(source, root / "docs" / "agentic-dev-kit" / "workflows")
+        target = root / "docs" / "agentic-dev-kit" / "workflows" / rel
+        text = target.read_text(encoding="utf-8")
+        # Match across the file's line breaks, and leave every other byte alone.
+        pattern = r"\s+".join(re.escape(word) for word in old.split())
+        mutated, applied = re.subn(pattern, new, text)
+        assert applied >= 1, (rel, old)
+        target.write_text(mutated, encoding="utf-8")
+        with pytest.raises(AssertionError):
+            _assert_split_workflow_links_and_triggers(root)
+
+
 def test_parallel_adapter_policy_contradictions_are_rejected() -> None:
     for path in (
         REPO_ROOT / ".claude" / "skills" / "parallel" / "SKILL.md",
@@ -2303,7 +2462,7 @@ def _assert_baseline_ready_policy(baseline: str) -> None:
 def test_pull_request_visibility_is_ready_by_default_with_a_bounded_draft_exception(
 ) -> None:
     workflow_root = REPO_ROOT / "docs" / "agentic-dev-kit" / "workflows"
-    policy = (workflow_root / "pr-watch.md").read_text(encoding="utf-8")
+    policy = read_workflow(workflow_root / "pr-watch.md")
     _assert_ready_draft_policy(policy)
 
     flattened_policy = _flatten_prose(policy)
@@ -2391,9 +2550,7 @@ def test_pull_request_visibility_is_ready_by_default_with_a_bounded_draft_except
     assert "`pr-watch --assert-ready` before the normal watch-and-fix loop" in shared_workflows["wrap-up"]
 
     configured_workflows = {
-        "triage.pr_draft": (workflow_root / "triage-friction-log.md").read_text(
-            encoding="utf-8"
-        ),
+        "triage.pr_draft": read_workflow(workflow_root / "triage-friction-log.md"),
         "systemize.pr_draft": (workflow_root / "post-merge-systemize.md").read_text(
             encoding="utf-8"
         ),
@@ -4107,7 +4264,8 @@ def _assert_triage_semantics(workflow: str, resolved_state_root: Path) -> None:
     assert (
         "The capability, authority, artifact, input, gate-only input precedence, test "
         "input precedence, recovery-transition, and completion rows in this "
-        "document are normative. They take precedence over later explanatory prose "
+        "workflow and its reference files are normative. They take precedence over "
+        "later explanatory prose "
         "and runtime adapters."
     ) in flattened
     input_order = (
@@ -4818,7 +4976,7 @@ def _assert_triage_semantics(workflow: str, resolved_state_root: Path) -> None:
     )
     isolated_test_recovery = workflow.split(
         "### Isolated test-state recovery\n", 1
-    )[1].split("\n### Execution context", 1)[0]
+    )[1].split("\n#", 1)[0]  # the section ends at the next heading, in any file
     assert " ".join(isolated_test_recovery.split()) == (
         "The `test` entry resolves only the test state, test gate, and test "
         "artifacts; it never reads or changes a live path. When interactive `test` "
@@ -13617,9 +13775,9 @@ def _assert_triage_semantics(workflow: str, resolved_state_root: Path) -> None:
     ".agents/skills/triage-friction-log",
 )
 def test_triage_integration_is_config_owned_shared_and_thin(tmp_path: Path) -> None:
-    workflow = (
+    workflow = read_workflow(
         REPO_ROOT / "docs/agentic-dev-kit/workflows/triage-friction-log.md"
-    ).read_text(encoding="utf-8")
+    )
     claude = (REPO_ROOT / ".claude/skills/triage-friction-log/SKILL.md").read_text(
         encoding="utf-8"
     )
@@ -13758,9 +13916,9 @@ def test_triage_integration_is_config_owned_shared_and_thin(tmp_path: Path) -> N
     ".agents/skills/triage-friction-log",
 )
 def test_triage_semantic_and_adapter_mutations_are_rejected(tmp_path: Path) -> None:
-    workflow = (
+    workflow = read_workflow(
         REPO_ROOT / "docs/agentic-dev-kit/workflows/triage-friction-log.md"
-    ).read_text(encoding="utf-8")
+    )
     mutations = (
         workflow.replace(
             "in engine-backed and LLM-only drafting; the author supplies the metadata",
