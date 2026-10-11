@@ -10,7 +10,7 @@ or another of its reference files.
 - Where the seen-set lives, and which comments the engine filters
 - The `review_bots` block, coverage and the receipt's caveats
 - `evidence_findings[]`
-- The REST backend and `truncated_reads`
+- The REST backend, `truncated_reads` and `unavailable_reads`
 - The review configuration keys
 - The review-evidence routes, the unsettled-rollup blocker and the requested-changes
   blocker
@@ -178,9 +178,11 @@ prose.
 ## The REST backend
 
 **Without `gh`, the engine polls but cannot authorize a merge.** When the `gh`
-binary is absent it falls back to the GitHub REST API using
-`GH_TOKEN`/`GITHUB_TOKEN` (with neither, it exits 2 saying so). That fallback is
-deliberately **poll-only**:
+binary is absent, or is on PATH but a GraphQL probe through it fails (a Claude Code
+cloud session's egress proxy refuses every GraphQL call), it falls back to the
+GitHub REST API using `GH_TOKEN`/`GITHUB_TOKEN` (with neither, it exits 2 saying
+so). Any probe failure selects REST, whatever its cause; stderr carries `gh`'s own
+error. That fallback is deliberately **poll-only**:
 
 - `mergeable` is **false by construction**, with the merge blocker `the REST
   backend cannot authorize a merge — it polls only`. No response from GitHub can
@@ -188,7 +190,8 @@ deliberately **poll-only**:
 - `--record-review`, `--record-round`, `--assert-draft` and `--assert-ready`
   **refuse** with exit 2. The two record modes write durable state bound to the
   PR head they read, and the draft flags mutate the PR, so they need `gh`.
-- `converged` works normally; the paragraph above *Loop* says what a session
+- `converged` works normally, except over a surface named in `unavailable_reads`
+  (below); the paragraph above *Loop* says what a session
   without `gh` does with that.
 - `report["backend"]` says which transport produced the poll (`gh` / `rest`).
 - Broadening this is tracked as an issue in this repo's tracker; it needs every
@@ -205,6 +208,19 @@ see every check or comment, so `converged` may be premature — REST list
 endpoints return oldest-first, so what gets dropped is the newest. It gates
 nothing (blocking `converged` would wedge the loop) and is printed by the human
 render as well as carried in the JSON. Empty on the `gh` backend.
+
+**`unavailable_reads`** lists, as `{surface, url, reason}`, any surface the REST
+read was refused. Today that is only `commit-statuses`, on any `403` from the
+combined-status endpoint. cs-toolkit reported on 2026-10-11 that a Claude Code cloud
+session's GitHub App token got one while it could read check runs, reviews and
+comments; a rate-limited token can get a transient one. The engine does not tell the
+two apart. The poll still reports, but `checks` then covers check runs only, so each
+entry also adds the merge blocker `<surface> could not be read`, and, when review bots
+are configured, the review-bot block reads `signal: unavailable`. It does not hold
+`converged` false, because where the token is refused the refusal recurs on every
+poll and would wedge the loop. On any poll with an entry, permanent or transient, `converged` does
+not cover status-context CI results; check them another way before handing the
+merge back. Empty on the `gh` backend.
 
 ## Review configuration
 
