@@ -26,6 +26,10 @@
 
 ## 2026-10-11
 
+- **Each #1063 lens pass found a LOW in the author's own claims about its tests.**
+  Severity L, kept for accumulation. The
+  full pass and the delta pass each found a changelog fragment or commit message saying
+  the tests caught more than they did.
 - **A CI-only failure in the pinned-preflight test passed on rerun.** Severity L, no
   mechanism yet. On #1053's first CI run,
   `test_panel_prompt.py::test_generated_preflight_authenticates_objects_before_execution[kitconfig]`
