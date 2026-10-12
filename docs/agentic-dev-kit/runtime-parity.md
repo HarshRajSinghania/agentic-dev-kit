@@ -325,6 +325,54 @@ prompt or the child's prose; its raw outputs were session-scoped and are quoted 
 excerpts, so the *Capability tiers* row of the capability matrix promotes only what
 the excerpts show.
 
+## Adopter-owned cloud setup hook
+
+In a one-off claude.ai/code cloud session on 2026-10-11, `echo
+CLAUDE_CODE_REMOTE=$CLAUDE_CODE_REMOTE` printed `CLAUDE_CODE_REMOTE=true`, and the hook
+below gates on that variable. Such a session can lack tools an adopter's local machine
+has: the adopter cs-toolkit reported `zsh`, `rsync` and its test dependencies missing
+in one, in its report to the operator on 2026-10-11. Installing them is
+the adopter's own `SessionStart` hook, and the steps stay out of the kit's scope. Its
+place in `.claude/settings.json` is a further entry in the same `hooks.SessionStart`
+array, after the entry holding the kit's budget-tripwire commands that `init.sh`
+prints, rather than another command inside that entry, so re-pasting the kit's block never touches it:
+
+```json
+{
+  "hooks": [
+    {
+      "type": "command",
+      "command": "[ \"$CLAUDE_CODE_REMOTE\" = \"true\" ] || exit 0; sh \"$CLAUDE_PROJECT_DIR/.claude/hooks/cloud-setup.sh\" || true",
+      "timeout": 300
+    }
+  ]
+}
+```
+
+A script in that slot exits at once outside a cloud session and always exits 0, so it
+never fails the session start. Exit status is all it guarantees: a hung install step
+delays the start until the entry's `timeout`, so set one that fits your steps.
+
+```sh
+#!/bin/sh
+# Cloud-only setup: does nothing unless Claude Code runs it in a cloud session.
+[ "${CLAUDE_CODE_REMOTE:-}" = "true" ] || exit 0
+warn() { echo "cloud-setup: $1 failed; continuing" >&2; }
+# >>> your install steps here, one per line, each ending in `|| warn <name>`:
+# apt-get install -y zsh rsync || warn apt-get
+exit 0
+```
+
+`kit_doctor` judges only commands that name a kit script, so this entry adds no
+finding; give the script a name no kit engine uses, since a matching basename is
+judged as the kit's.
+
+The slot is Claude Code-only. Codex reads `SessionStart` hooks too, from
+`.codex/hooks.json` (where the kit registers the document-budget tripwire) or inline in
+`.codex/config.toml`, but `CLAUDE_CODE_REMOTE` is Claude Code's
+variable and this contract declares no Codex counterpart for a cloud session, so nothing
+goes into either file for it.
+
 ## Product surfaces this contract relies on
 
 The Codex bindings follow the supported repository skill layout and explicit `$skill`
