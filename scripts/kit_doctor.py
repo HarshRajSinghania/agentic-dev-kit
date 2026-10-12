@@ -76,6 +76,9 @@ it reports one of:
     ``--generate-manifest`` time from the PYTHON import graph, not restated by
     hand. Shell ``source`` is deliberately NOT scanned — see
     `derive_dependencies` for the gap that leaves and why it is left open.
+    A workflow's reference files are the one non-import edge: each file under
+    ``docs/agentic-dev-kit/workflows/<slug>/`` is required by ``<slug>.md``
+    beside it, which tells the agent to read them all before acting (#1057).
 
     That derivation runs against the KIT, so the edge describes the version the
     kit ships and this state requires the dependent to BE that version —
@@ -816,6 +819,21 @@ def _module_targets(module: str, package_dir: str) -> tuple[str, ...]:
     return (f"{package_dir}/{base}.py", f"{package_dir}/{base}/__init__.py")
 
 
+WORKFLOWS_DIR = PurePosixPath("docs/agentic-dev-kit/workflows")
+
+
+def _workflow_entry_of(rel: str) -> str | None:
+    """The entry ``<slug>.md`` a workflow reference file belongs to, or None.
+
+    A reference file sits one level down, at ``<WORKFLOWS_DIR>/<slug>/<name>.md``;
+    an entry or anything deeper has no entry of its own.
+    """
+    path = PurePosixPath(rel)
+    if path.suffix != ".md" or path.parent.parent != WORKFLOWS_DIR:
+        return None
+    return f"{path.parent}.md"
+
+
 def derive_dependencies(
     root: Path, kit_owned: tuple[tuple[str, str], ...] = KIT_OWNED
 ) -> dict[str, list[str]]:
@@ -882,6 +900,14 @@ def derive_dependencies(
       (Correctness lens, PR #225 rounds 1 and 2.)
     - Shell `source` is not scanned at all, so `lib/repo_root.sh`'s two
       dependents are absent from the graph. Stated above; #228 carries it.
+    - One edge is NOT an import: a workflow reference file under
+      ``docs/agentic-dev-kit/workflows/<slug>/`` is required by the entry
+      ``<slug>.md`` beside it (#1057), when both are `workflow` KIT_OWNED files
+      present in this tree. It is decided by path, never by scanning the entry's
+      links: the entry tells the agent to read every file in that directory
+      before its first action, so a reference file it never names is still
+      read, and declining one leaves a run that skipped a read looking like one
+      that needed nothing (#146's shape).
     - Every one of these bounds errs toward NO edge. That direction is chosen,
       not incidental: a missing edge degrades a file to plain `missing`, which
       is the pre-#41 behaviour and merely unhelpful, while a false edge tells an
@@ -902,6 +928,11 @@ def derive_dependencies(
             dependents.setdefault(target, set()).add(importer)
 
     for rel, role in kit_owned:
+        if role == "workflow":
+            entry = _workflow_entry_of(rel)
+            if entry in owned and (root / entry).is_file() and (root / rel).is_file():
+                record(rel, entry)
+            continue
         if role not in ("engine", "hook"):
             continue
         source = root / rel
@@ -1068,7 +1099,7 @@ class Report:
         """Files that are not installed and should be.
 
         Two states, one conclusion: `missing-required` is absent-and-depended-on
-        (derived from the import graph), `removed` is absent-and-recorded-as-
+        (derived from the import graph and the workflow layout), `removed` is absent-and-recorded-as-
         installed (derived from the baseline). Both mean the tree is broken
         rather than sized down, so both reach the exit code the same way — which
         is what this property is for.
@@ -3416,7 +3447,7 @@ def render(report: Report) -> str:
     n_absent = len(by_state.get("missing", [])) + n_required_missing + n_removed
     notes = []
     if n_required_missing:
-        notes.append(f"{n_required_missing} required by an installed engine")
+        notes.append(f"{n_required_missing} required by an installed engine or workflow")
     if n_removed:
         notes.append(f"{n_removed} recorded as installed here")
     absent_note = f" ({', '.join(notes)})" if notes else ""
@@ -3475,7 +3506,7 @@ def render(report: Report) -> str:
             # which an earlier draft did: `broken` holds TWO states with
             # different provenance, and only `removed` comes from the baseline.
             # A `missing-required` file may be one the repo recorded as
-            # DECLINED — absent, required by an installed engine, and on record
+            # DECLINED — absent, required by an installed engine or workflow, and on record
             # as exactly the opposite of installed. The per-state sections below
             # each name their own source; this line must not pick one of them
             # and assert it for both (the overstatement class #54 tracks).
@@ -3655,7 +3686,7 @@ def render(report: Report) -> str:
         # "decide, don't assume" but "install it".
         (
             "missing-required",
-            "✗ NOT INSTALLED, and needed by an engine that is — this install is "
+            "✗ NOT INSTALLED, and needed by an engine or workflow that is — this install is "
             "broken, not sized down. Install these before refreshing any engine",
         ),
         # Beside `missing-required` because they carry the same verdict from a

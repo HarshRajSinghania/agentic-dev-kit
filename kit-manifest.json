@@ -67,6 +67,9 @@
       "sha256": "120de7f89a0e7b75a03be26f40a7a34e5c2d093d9d24cdbcffab4559dfcaabec"
     },
     "docs/agentic-dev-kit/workflows/pr-watch/report-fields.md": {
+      "required_by": [
+        "docs/agentic-dev-kit/workflows/pr-watch.md"
+      ],
       "role": "workflow",
       "sha256": "8217beb260ebde32ba9230d4aace42f73f020790d657110e0cb75e1c624de11f"
     },
@@ -79,24 +82,36 @@
       "sha256": "c723ace0124b9c996a87d8577afdb5b55e96177bf32a3d144c487a2cd8ed4b62"
     },
     "docs/agentic-dev-kit/workflows/triage-friction-log/engine-cli.md": {
+      "required_by": [
+        "docs/agentic-dev-kit/workflows/triage-friction-log.md"
+      ],
       "role": "workflow",
       "sha256": "fc826161750ca25016c9ebf26fd1460e8ee6551429ed544a5372fa172360302f"
     },
     "docs/agentic-dev-kit/workflows/triage-friction-log/finalize.md": {
+      "required_by": [
+        "docs/agentic-dev-kit/workflows/triage-friction-log.md"
+      ],
       "role": "workflow",
       "sha256": "5206193b6583bab484c27e5ee6ce3f7432ff7a760622273cbdf98ae62d1663b1"
     },
     "docs/agentic-dev-kit/workflows/triage-friction-log/recovery.md": {
+      "required_by": [
+        "docs/agentic-dev-kit/workflows/triage-friction-log.md"
+      ],
       "role": "workflow",
       "sha256": "febcf9ea3906e4345ef762db0caee445395261a307a232aa4f8dd02d87df00ca"
     },
     "docs/agentic-dev-kit/workflows/triage-friction-log/state-schema.md": {
+      "required_by": [
+        "docs/agentic-dev-kit/workflows/triage-friction-log.md"
+      ],
       "role": "workflow",
       "sha256": "6435271a1d09395dc61df3fe0b3e84b2e2033fd7f1b640f4434904b47b08e80b"
     },
     "docs/agentic-dev-kit/workflows/upgrade.md": {
       "role": "workflow",
-      "sha256": "78553944d4aca06808b6a3a27349534766e9f24a40dc094a2f6c69f0ce9f8023"
+      "sha256": "0556837731ec5353444e2da1498816ee1071122d4c1da820b13c70b5c8be8977"
     },
     "docs/agentic-dev-kit/workflows/wrap-up.md": {
       "role": "workflow",
@@ -183,7 +198,7 @@
         "scripts/panel_prompt.py"
       ],
       "role": "engine",
-      "sha256": "3b5d757e77a432247b65581cd4ec19487e8070850d51004d19be84d1eeb6e85d"
+      "sha256": "7dc15d4c3598fefcdf5689add9e145412b592f83734ebe88ab3fc10cd9e54f08"
     },
     "scripts/launch_lane.py": {
       "role": "engine",
@@ -617,7 +632,7 @@
     },
     "scripts/tests/test_kit_doctor.py": {
       "role": "test",
-      "sha256": "9a91d78c57a94cbfb8a030d538a93f0243ac27dc1d5966906b8a7f685f75fe98"
+      "sha256": "939e07428365f0b85c6290797f5a31669e75d3f96b9d5cd4efb818a38def61b0"
     },
     "scripts/tests/test_kit_repo_only.py": {
       "role": "test",
