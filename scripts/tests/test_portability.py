@@ -3156,6 +3156,58 @@ def _assert_bookend_integration_semantics(name: str, workflow: str) -> None:
             "Do not mark `forge-pr-read` ready from list metadata or an "
             "acknowledgement-filtered view alone"
         ) in flattened
+        # A forge that refuses GraphQL (a Claude Code cloud session's egress
+        # proxy) must leave the PR list on its REST route, complete only by exit
+        # status, and unavailable rather than empty when every route fails.
+        assert (
+            "gh api --paginate 'repos/{owner}/{repo}/pulls?state=open&per_page=100'"
+        ) in flattened
+        assert (
+            "Treat that error as `gh` unavailable for every fallback purpose"
+            in flattened
+        )
+        assert (
+            "A run counts as complete only when it exits zero; one that exits "
+            "non-zero after printing some pages is truncated, and its partial "
+            "output is discarded, never read as the list."
+        ) in flattened
+        assert (
+            "render `PRs unavailable: <reason>`, never an empty list" in flattened
+        )
+        # The REST /issues route returns pull requests too, and a token refused
+        # the combined status leaves `checks` partial rather than green.
+        assert "drop every row that carries a `pull_request` key" in flattened
+        assert (
+            "render its CI as `CI partial: <surface> unreadable`, never as green"
+            in flattened
+        )
+        # The fail-open edges of the REST routes: a pipe hiding gh's status, a
+        # partial note replacing a real CI-red, a refused tracker read as fine,
+        # and a status-surface gap read as a missing comment layer.
+        assert "**Check `gh`'s own exit status, not a pipeline's**" in flattened
+        assert (
+            "Write `gh`'s output to a file and check its status before parsing, "
+            "or run under `set -o pipefail`"
+        ) in flattened
+        assert "the partial note is added to it, not put in its place" in flattened
+        # The tracker route names the configured tracker repository, not the
+        # checkout's, and the REST review state never claims awaiting-review: the
+        # engine's REST `review_decision` cannot express it.
+        assert (
+            "gh api --paginate 'repos/<tracker.project_name>/issues?state=open&per_page=100'"
+        ) in flattened
+        assert "repos/{owner}/{repo}/issues" not in flattened
+        assert (
+            "take CI-red from its `checks.failing` and CI-pending from `checks.pending`."
+        ) in flattened
+        assert (
+            "On this route render an empty `review_decision` as review state unknown, "
+            "never as awaiting-review or as reviewed."
+        ) in flattened
+        assert "awaiting-review from `review_decision`" not in flattened
+        assert "still makes the pull request CI-red" in flattened
+        assert "that refusal is the tracker gap unless" in flattened
+        assert "so it does not make this layer unavailable" in flattened
         # #762: workstreams, not recency, carry the handoff's next steps.
         assert (
             "**no entry is promoted for being the most recently updated**"
@@ -3708,6 +3760,40 @@ def test_bookend_integration_semantic_mutations_are_rejected() -> None:
         ("session-start", session, session.replace(
             "if `truncated_reads[]` is non-empty, ",
             "", 1
+        )),
+        ("session-start", session, session.replace(
+            "'repos/{owner}/{repo}/pulls?state=open&per_page=100'",
+            "'repos/{owner}/{repo}/pulls?state=open'", 1
+        )),
+        ("session-start", session, session.replace(
+            "Treat that error as `gh` unavailable for every\n  fallback purpose",
+            "Treat that error as an empty list", 1
+        )),
+        ("session-start", session, session.replace(
+            "is truncated, and its\n  partial output is discarded, never read as the list.",
+            "is complete, and its\n  partial output is read as the list.", 1
+        )),
+        ("session-start", session, session.replace(
+            "render `PRs unavailable: <reason>`, never\n  an empty list.",
+            "render an empty list.", 1
+        )),
+        ("session-start", session, session.replace(
+            "drop every row that carries a `pull_request` key", "keep every row", 1
+        )),
+        ("session-start", session, session.replace(
+            "**Check `gh`'s own exit\n  status, not a pipeline's**", "Check the status", 1
+        )),
+        ("session-start", session, session.replace(
+            "still makes the pull request CI-red", "is not shown", 1
+        )),
+        ("session-start", session, session.replace(
+            "that refusal is the tracker gap unless", "that refusal is fine unless", 1
+        )),
+        ("session-start", session, session.replace(
+            "so it does not make this layer\n  unavailable", "so it makes this layer\n  unavailable", 1
+        )),
+        ("session-start", session, session.replace(
+            "`CI partial: <surface> unreadable`,\n  never as green", "green", 1
         )),
         ("wrap-up", wrap, wrap.replace(
             "`kitconfig.load_config()`", "`config/dev-model.yaml`", 1
